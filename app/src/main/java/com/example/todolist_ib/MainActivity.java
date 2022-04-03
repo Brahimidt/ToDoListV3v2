@@ -3,7 +3,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.View;
@@ -19,19 +21,23 @@ public class MainActivity extends AppCompatActivity {
     private final static int MY_REQUEST_CODE = 1;
     ListView maListe;
     ArrayAdapter<String> myarray;
+
     String daily[] = { "Sacar al perro ; pediente", "comprar el pan ; pediente",
             "revisar el correo de la salle ; pediente", "preparar reuniones del día ; pediente",
             "hacer ejercicio ; pediente" };
+
     ArrayList<String> myArrayList = new ArrayList<String>(Arrays.asList(daily));
+
+    SharedPreferences sharedPreferences;
+    SharedPreferences.Editor editor = sharedPreferences.edit();
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        sharedPreferences = getSharedPreferences("Users", Context.MODE_PRIVATE);
         Button button = (Button) findViewById(R.id.addButton);
-
         String empty = "empty";
         ajt(empty);
         button.setOnClickListener(new View.OnClickListener() {
@@ -46,6 +52,11 @@ public class MainActivity extends AppCompatActivity {
     public void ajt(String test){
         maListe = findViewById(R.id.list);
         myarray = new ArrayAdapter<String>(this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, myArrayList);
+        for(int i = 0; i < myArrayList.size(); i++)
+        {
+            editor.putString(String.valueOf(i),String.valueOf(myArrayList.indexOf(i)));
+        }
+        editor.commit();
         maListe.setAdapter(myarray);
         maListe.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -59,12 +70,18 @@ public class MainActivity extends AppCompatActivity {
                 }else{
                     myArrayList.set(position,parties[0]+"; realisado");
                 }
+                editor.clear();
+                editor.commit();
+                for(int i = 0; i < myArrayList.size(); i++)
+                {
+                    editor.putString(String.valueOf(i),String.valueOf(myArrayList.indexOf(i)));
+                }
+                editor.commit();
                 myarray.notifyDataSetChanged();
 
             }
         });
     }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -72,6 +89,13 @@ public class MainActivity extends AppCompatActivity {
             if (requestCode == MY_REQUEST_CODE) {
                String test = data.getStringExtra("value");
                 myArrayList.add(test+" ; pediente");
+                editor.clear();
+                editor.commit();
+                for(int i = 0; i < myArrayList.size(); i++)
+                {
+                    editor.putString(String.valueOf(i),String.valueOf(myArrayList.indexOf(i)));
+                }
+                editor.commit();
                 myarray.notifyDataSetChanged();
             }
         }
