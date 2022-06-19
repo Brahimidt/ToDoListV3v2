@@ -85,6 +85,16 @@ public class MainActivity extends AppCompatActivity {
                 }
                 myarray.notifyDataSetChanged();
 
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.clear();
+                editor.commit();
+
+                for(int i = 0; i < myArrayList.size(); i++)
+                {
+                    editor.putString(String.valueOf(i),myArrayList.get(i));
+                }
+                editor.commit();
+
             }
         });
     }
