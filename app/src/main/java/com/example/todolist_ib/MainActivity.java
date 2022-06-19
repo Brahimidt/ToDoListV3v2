@@ -1,6 +1,7 @@
 package com.example.todolist_ib;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import android.app.Activity;
 import android.content.Context;
@@ -13,17 +14,31 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
     private final static int MY_REQUEST_CODE = 1;
     ListView maListe;
     ArrayAdapter<String> myarray;
     ArrayList<String> myArrayList = new ArrayList<String>();
+    Retrofit retrofit = new Retrofit.Builder()
+            .baseUrl("https://jsonplaceholder.typicode.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build();
 
+    retrofitInterface service = retrofit.create(retrofitInterface.class);
 
     SharedPreferences sharedPreferences;
 
@@ -34,23 +49,36 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         sharedPreferences = getSharedPreferences("items", Context.MODE_PRIVATE);
         String s1 = sharedPreferences.getString("1", "");
-        if(s1 != ""){
-            Map<String, ?> prefsMap = sharedPreferences.getAll();
-            for(Map.Entry<String, ?> entry: prefsMap.entrySet()) {
-                myArrayList.add(String.valueOf(entry.getValue()));
-            }
-        }else{
-            myArrayList.add("Sacar al perro ; pediente");
-            myArrayList.add("comprar el pan ; pediente");
-            myArrayList.add("revisar el correo de la salle ; pediente");
-            myArrayList.add("preparar reuniones del día ; pediente");
-            myArrayList.add("hacer ejercicio ; pediente");
-        }
 
+        service.todoList().enqueue(new Callback<List<item>>() {
+            @Override
+            public void onResponse(Call<List<item>> call, Response<List<item>> response) {
+                if (response.isSuccessful()){
+                    Toast.makeText(MainActivity.this, "Success", Toast.LENGTH_SHORT).show();
+                    for(int i = 0; i <  response.body().size(); i++)
+                    {
+                        if(response.body().get(i).completed == false){
+                            myArrayList.add(response.body().get(i).title + " ; pediente");
+                        }else{
+                            myArrayList.add(response.body().get(i).title + " ; realisado");
+                        }
+
+                    }
+                }
+                else{
+                    Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
+                }
+            }
+            @Override
+            public void onFailure(Call<List<item>> call, Throwable t) {
+            }
+        });
 
         Button button = (Button) findViewById(R.id.addButton);
         String empty = "empty";
         ajt(empty);
+        myArrayList.add("");
+        myarray.notifyDataSetChanged();
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -58,6 +86,8 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(intent, MY_REQUEST_CODE);
             }
         });
+
+
     }
 
     public void ajt(String test){
@@ -96,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
                 editor.commit();
 
             }
+
         });
     }
 
